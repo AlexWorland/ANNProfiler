@@ -13,6 +13,7 @@ import tensorflow as tensorFlow
 class MNIST:
     trainingData = ""
     testingData = ""
+
     def __init__(self):
         """
         Initializes the training and testing data as well as the infoData
