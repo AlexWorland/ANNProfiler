@@ -40,7 +40,7 @@ def main():
     model = tensorFlow.keras.models.Sequential()
     model = intializeModel(userInfo, model)
     model = compileModel(model)
-    model = trainModel(model)
+    model = trainModel(model, mnistData)
     foo = "foo"
 
 
@@ -77,8 +77,8 @@ def compileModel(model):
     return model
 
 
-def trainModel(model):
-    model.trainModel()
+def trainModel(model, mnistData):
+    model.trainModel(mnistData)
     # TODO: Training time information will need to be collected here
     return model
 
