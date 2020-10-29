@@ -42,6 +42,7 @@ class NeuralNetwork:
         A function that creates the network from the user's parameters
         :return:
         """
+
         # Input layer. Always the same: 28x28
         self.model.add(tensorFlow.keras.layers.Flatten(input_shape=(28, 28, 1)))
         # Add the desired amount of hidden layers, each with the given amount of neurons, each using the given
@@ -57,11 +58,11 @@ class NeuralNetwork:
         # User can pick the activation function, though TensorFlow recommends softmax
         self.model.add(tensorFlow.keras.layers.Dense(10, activation=self.activationFunctionOutput))
 
-    def trainModel(self):
+    def trainModel(self, mnistData):
         self.model.fit(
-            MNIST.trainingData,
+            mnistData.trainingData,
             epochs=self.numEpochs,
-            validation_data=MNIST.testingData
+            validation_data=mnistData.testingData
         )
 
     def compileModel(self):
@@ -69,5 +70,5 @@ class NeuralNetwork:
             loss='sparse_categorical_crossentropy',
             optimizer=tensorFlow.keras.optimizers.Adam(0.001),
             # TODO: Could be interesting...
-            metrics=['accuracy'],
+            metrics=['accuracy']
         )
