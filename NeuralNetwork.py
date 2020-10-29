@@ -7,21 +7,26 @@ Description:
 """
 
 import tensorflow as tensorFlow
+from FinalProject.MNISTDataset import MNIST
 
 
 class NeuralNetwork:
     # Default Values
     numHiddenLayers = 1
     numNeuronsPerHLayer = 128
-    trainingEpochs = 10
+    numEpochs = 10
     model = tensorFlow.keras.models.Sequential()
     activationFunctionHidden = 'relu'
     activationFunctionOutput = 'softmax'
 
-    def __init__(self, numHiddenLayers, numNeuronsPerHLayer, trainingEpochs):
+    def __init__(self, numHiddenLayers, numNeuronsPerHLayer, trainingEpochs, activationFunction):
         self.numHiddenLayers = numHiddenLayers
         self.numNeuronsPerHLayer = numNeuronsPerHLayer
-        self.trainingEpochs = trainingEpochs
+        self.numEpochs = trainingEpochs
+        # TODO: This line requires either a new map of full function names to shorthand or the
+        #  activations.deserielize function. For now it will be commented out
+        # self.activationFunctionHidden = activationFunction
+        # Todo: also consider creating the model here in the init
 
     def initFromNumHiddenLayers(self, numHiddenLayers):
         self.numHiddenLayers = numHiddenLayers
@@ -30,7 +35,7 @@ class NeuralNetwork:
         self.numNeuronsPerHLayer = numNeuronsPerHLayer
 
     def initFromTrainingEpochs(self, trainingEpochs):
-        self.trainingEpochs = trainingEpochs
+        self.numEpochs = trainingEpochs
 
     def createModel(self):
         """
@@ -41,7 +46,7 @@ class NeuralNetwork:
         self.model.add(tensorFlow.keras.layers.Flatten(input_shape=(28, 28, 1)))
         # Add the desired amount of hidden layers, each with the given amount of neurons, each using the given
         # activation function
-        for n in self.numHiddenLayers:
+        for n in range(self.numHiddenLayers):
             self.model.add(
                 tensorFlow.keras.layers.Dense(
                     self.numNeuronsPerHLayer,
@@ -51,5 +56,18 @@ class NeuralNetwork:
         # Add the output layer. Size is always the same: 10 neurons each representing a base 10 digit
         # User can pick the activation function, though TensorFlow recommends softmax
         self.model.add(tensorFlow.keras.layers.Dense(10, activation=self.activationFunctionOutput))
-        return self.model
 
+    def trainModel(self):
+        self.model.fit(
+            MNIST.trainingData,
+            epochs=self.numEpochs,
+            validation_data=MNIST.testingData
+        )
+
+    def compileModel(self):
+        self.model.compile(
+            loss='sparse_categorical_crossentropy',
+            optimizer=tensorFlow.keras.optimizers.Adam(0.001),
+            # TODO: Could be interesting...
+            metrics=['accuracy'],
+        )
