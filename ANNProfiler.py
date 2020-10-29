@@ -34,6 +34,8 @@ activationFunctionMap = {0: "Rectified Linear (Recommended)",
 
 
 def main():
+    from tensorflow.python.client import device_lib
+    print(device_lib.list_local_devices())
     welcomeUser()
     userInfo = getUserInfo(activationFunctionMap)
     mnistData = MNISTData()
@@ -42,6 +44,7 @@ def main():
     model = compileModel(model)
     model = trainModel(model, mnistData)
     foo = "foo"
+    print(model)
 
 
 def welcomeUser():
@@ -85,5 +88,9 @@ def trainModel(model, mnistData):
 
 if __name__ == '__main__':
     import os
+
     os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-    main()
+   # with tensorFlow.device("/gpu:0"):
+   #     main()
+    with tensorFlow.device("/cpu:0"):
+        main()
