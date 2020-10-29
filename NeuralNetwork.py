@@ -44,7 +44,7 @@ class NeuralNetwork:
         """
 
         # Input layer. Always the same: 28x28
-        self.model.add(tensorFlow.keras.layers.Flatten(input_shape=(28, 28, 1)))
+        self.model.add(tensorFlow.keras.layers.Flatten(input_shape=(28, 28)))
         # Add the desired amount of hidden layers, each with the given amount of neurons, each using the given
         # activation function
         for n in range(self.numHiddenLayers):
@@ -54,21 +54,22 @@ class NeuralNetwork:
                     activation=self.activationFunctionHidden
                 )
             )
+
+        self.model.add(tensorFlow.keras.layers.Dropout(0.2))
         # Add the output layer. Size is always the same: 10 neurons each representing a base 10 digit
         # User can pick the activation function, though TensorFlow recommends softmax
-        self.model.add(tensorFlow.keras.layers.Dense(10, activation=self.activationFunctionOutput))
-
-    def trainModel(self, mnistData):
-        self.model.fit(
-            mnistData.trainingData,
-            epochs=self.numEpochs,
-            validation_data=mnistData.testingData
-        )
+        self.model.add(tensorFlow.keras.layers.Dense(10))
 
     def compileModel(self):
         self.model.compile(
-            loss='sparse_categorical_crossentropy',
-            optimizer=tensorFlow.keras.optimizers.Adam(0.001),
+            loss=tensorFlow.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             # TODO: Could be interesting...
             metrics=['accuracy']
+        )
+
+    def trainModel(self, mnistData):
+        self.model.fit(
+            mnistData.trainingData[0],
+            mnistData.trainingData[1],
+            epochs=self.numEpochs,
         )

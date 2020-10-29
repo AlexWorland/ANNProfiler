@@ -12,20 +12,18 @@ import tensorflow as tensorFlow
 
 class MNIST:
     trainingData = ""
-    testingData = ""
+    validationData = ""
 
     def __init__(self):
         """
         Initializes the training and testing data as well as the infoData
         """
-        (trainingData, testingData), infoData = dataSets.load(
-            'mnist',
-            split=['train', 'test'],
-            shuffle_files=True,
-            as_supervised=True,
-            with_info=True)
-        self.trainingData = self.__initTrainingData(trainingData, infoData)
-        self.testingData = self.__initTestingData(testingData)
+        mnist = tensorFlow.keras.datasets.mnist
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        # Convert samples from int to float
+        x_train, x_test = x_train / 255.0, x_test / 255.0
+        self.trainingData = (x_train, y_train)
+        self.validationData = (x_test, y_test)
 
     @staticmethod
     def normalizeImage(image, label):
