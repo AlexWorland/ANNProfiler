@@ -11,6 +11,8 @@ import tensorflow as tensorFlow
 
 
 class MNIST:
+    trainingData = ""
+    testingData = ""
     def __init__(self):
         """
         Initializes the training and testing data as well as the infoData
@@ -21,8 +23,8 @@ class MNIST:
             shuffle_files=True,
             as_supervised=True,
             with_info=True)
-        trainingData = self.__initTrainingData(trainingData, infoData)
-        testingData = self.__initTestingData(testingData)
+        self.trainingData = self.__initTrainingData(trainingData, infoData)
+        self.testingData = self.__initTestingData(testingData)
 
     @staticmethod
     def normalizeImage(image, label):
