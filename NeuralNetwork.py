@@ -11,6 +11,10 @@ from FinalProject.MNISTDataset import MNIST
 
 
 class NeuralNetwork:
+    """
+    A class that represents a neural network model
+    """
+
     # Default Values
     numHiddenLayers = 1
     numNeuronsPerHLayer = 128
@@ -61,6 +65,10 @@ class NeuralNetwork:
         self.model.add(tensorFlow.keras.layers.Dense(10))
 
     def compileModel(self):
+        """
+        A function that compiles the model
+        :return:
+        """
         self.model.compile(
             loss=tensorFlow.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             # TODO: Could be interesting...
@@ -68,6 +76,11 @@ class NeuralNetwork:
         )
 
     def trainModel(self, mnistData):
+        """
+        A function that fits the current model to the mnistData
+        :param mnistData: the MNIST dataset
+        :return:
+        """
         self.model.fit(
             mnistData.trainingData[0],
             mnistData.trainingData[1],
