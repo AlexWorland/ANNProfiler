@@ -14,6 +14,7 @@ Description:
     own digit with their mouse and see the network work visually and see the prediction and accuracy displayed.
 """
 import tensorflow as tensorFlow
+from tensorflow.python.client import device_lib
 import time
 from FinalProject.MNISTDataset import MNIST as MNISTData
 from FinalProject.NeuralNetwork import NeuralNetwork as NeuralNetwork
@@ -52,26 +53,29 @@ def main():
     welcomeUser()
     # Get the number of hidden layers, neurons, and epochs from user
     userInfo = getUserInfo(activFuncSelectionMap)
-    # Initialize the MNIST dataset
-    mnistData = MNISTData()
-    # Create a new keras Sequential model
-    print("Creating Model...")
-    model = tensorFlow.keras.models.Sequential()
-    # Initialize the model with the user data
-    print("Initializing Model...")
-    model = intializeModel(userInfo, model)
-    # Compile the model
-    print("Compiling Model...")
-    model = compileModel(model)
-    # Train the model with the MNIST dataset
-    print("Training Model...")
-    print("Beginning Training with", userInfo[2], "epochs:")
-    startTime = time.perf_counter()
-    model = trainModel(model, mnistData)
-    endTime = time.perf_counter()
-    totalTrainingTime = endTime-startTime
-    print(totalTrainingTime, "seconds.")
-    # TODO: Display training metrics
+
+    with tensorFlow.device(userInfo[4]):
+        print("foo")
+        # Initialize the MNIST dataset
+        mnistData = MNISTData()
+        # Create a new keras Sequential model
+        print("Creating Model...")
+        model = tensorFlow.keras.models.Sequential()
+        # Initialize the model with the user data
+        print("Initializing Model...")
+        model = intializeModel(userInfo, model)
+        # Compile the model
+        print("Compiling Model...")
+        model = compileModel(model)
+        # Train the model with the MNIST dataset
+        print("Training Model...")
+        print("Beginning Training with", userInfo[2], "epochs:")
+        startTime = time.perf_counter()
+        model = trainModel(model, mnistData)
+        endTime = time.perf_counter()
+        totalTrainingTime = endTime - startTime
+        print(totalTrainingTime, "seconds.")
+        # TODO: Display training metrics
 
 
 def welcomeUser():
@@ -91,25 +95,38 @@ def getUserInfo(activationFunctionMap):
     """
     # TODO: Try/Catch for input mismatch
     flag = True
-    while (flag):
+    while flag:
         try:
             numHiddenLayers = int(input("How many hidden layers would you like the network to have? : "))
+            print()
             numNeurons = int(input("How many neurons would you like those layers to have? : "))
+            print()
             numEpochs = int(input("How many epochs would you like to train the network? : "))
+            print()
             print("What activation function would you like to use for those neurons?")
+            print()
             for i in range(len(activationFunctionMap)):
                 print(i, " : ", activationFunctionMap.get(i))
+            print()
             activationFunction = int(input("Please enter the activation function's number: "))
+            print()
+            print("What device would you like to train this network on?")
+            devices = device_lib.list_local_devices()
+            for i in range(len(devices)):
+                print(i, " : ", devices[i])
+            print()
+            device = int(input("Please enter the device you would like to train the network on: "))
+            device = devices[device].name
             flag = False
         except ValueError:
             print("Please enter a valid number.")
 
-    return [numHiddenLayers, numNeurons, numEpochs, activationFunction]
+    return [numHiddenLayers, numNeurons, numEpochs, activationFunction, device]
 
 
 def intializeModel(userInfo, model):
     """
-    A function that inititializes the model based on the user input
+    A function that initializes the model based on the user input
     :param userInfo:
     :param model:
     :return:
