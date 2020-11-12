@@ -13,6 +13,9 @@ Description:
     The user can also interact with the network directly through the user input mode. The user can draw their
     own digit with their mouse and see the network work visually and see the prediction and accuracy displayed.
 """
+# Disable tensorflow logging
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = "1"
 import tensorflow as tensorFlow
 from tensorflow.python.client import device_lib
 import time
@@ -176,4 +179,5 @@ def trainModel(model, mnistData):
 
 
 if __name__ == '__main__':
+
     main()
