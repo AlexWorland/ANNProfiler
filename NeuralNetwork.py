@@ -27,8 +27,7 @@ class NeuralNetwork:
         self.numHiddenLayers = numHiddenLayers
         self.numNeuronsPerHLayer = numNeuronsPerHLayer
         self.numEpochs = trainingEpochs
-        # TODO: This line requires either a new map of full function names to shorthand or the
-        #  activations.deserielize function. For now it will be commented out
+        self.activationFunctionHidden = activationFunction
         self.createModel()
 
     def initFromNumHiddenLayers(self, numHiddenLayers):
