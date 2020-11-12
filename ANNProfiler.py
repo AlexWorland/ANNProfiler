@@ -58,13 +58,9 @@ def main():
         # Initialize the MNIST dataset
         mnistData = MNISTData()
 
-        # Create a new keras Sequential model
-        print("Creating Model...")
-        model = tensorFlow.keras.models.Sequential()
-
         # Initialize the model with the user data
         print("Initializing Model...")
-        model = intializeModel(userInfo, model)
+        model = intializeModel(userInfo)
 
         # Compile the model
         print("Compiling Model...")
@@ -94,6 +90,7 @@ def welcomeUser():
     print()
     print("**********************************************************************")
     print()
+
 
 def getUserInfo(activationFunctionMap):
     """
@@ -137,7 +134,7 @@ def getUserInfo(activationFunctionMap):
     return [numHiddenLayers, numNeurons, numEpochs, activationFunction, device]
 
 
-def intializeModel(userInfo, model):
+def intializeModel(userInfo):
     """
     A function that initializes the model based on the user input
     :param userInfo: an array containing relevant information from the user
@@ -148,10 +145,11 @@ def intializeModel(userInfo, model):
     numHiddenLayers = userInfo[0]
     numNeurons = userInfo[1]
     numEpochs = userInfo[2]
-    activationFunction = activFuncSelectionMap.get(userInfo[3])
+    activationFunctionLonghand = activFuncSelectionMap.get(userInfo[3])
+    activationFunctionKeras = activFuncKerasMap.get(activationFunctionLonghand)
 
     # Create new model based on user selections
-    model = NeuralNetwork(numHiddenLayers, numNeurons, numEpochs, activationFunction)
+    model = NeuralNetwork(numHiddenLayers, numNeurons, numEpochs, activationFunctionKeras)
     return model
 
 
@@ -178,8 +176,4 @@ def trainModel(model, mnistData):
 
 
 if __name__ == '__main__':
-    # Required environment flags for macos
-    # TODO: Look into reason why
-    # import os
-    # os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
     main()
