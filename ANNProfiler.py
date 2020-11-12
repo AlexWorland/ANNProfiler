@@ -22,19 +22,19 @@ from FinalProject.NeuralNetwork import NeuralNetwork as NeuralNetwork
 numHiddenLayers = 0
 numNeurons = 0
 numEpochs = 0
-activFuncSelectionMap = {0: "Rectified Linear (Recommended For Hidden Layer)",
+activFuncSelectionMap = {0: "Rectified Linear (Recommended For Hidden Layer(s))",
                          1: "Linear",
                          2: "Exponential Linear Unit",
                          3: "Exponential Activation",
                          4: "Sigmoid",
                          5: "Hard Sigmoid",
                          6: "Scaled Exponential Linear Unit",
-                         7: "Softmax (Recommended For Output Layer",
+                         7: "Softmax (Recommended For Output Layer)",
                          8: "Softplus",
                          9: "Softsign",
                          10: "Swish",
                          11: "Hyperbolic Tangent Activation Function"}
-activFuncKerasMap = {"Rectified Linear (Recommended For Hidden Layer)": 'relu',
+activFuncKerasMap = {"Rectified Linear (Recommended For Hidden Layer(s))": 'relu',
                      "Linear": 'linear',
                      "Exponential Linear Unit": 'elu',
                      "Exponential Activation": 'exponential',
@@ -55,18 +55,21 @@ def main():
     userInfo = getUserInfo(activFuncSelectionMap)
 
     with tensorFlow.device(userInfo[4]):
-        print("foo")
         # Initialize the MNIST dataset
         mnistData = MNISTData()
+
         # Create a new keras Sequential model
         print("Creating Model...")
         model = tensorFlow.keras.models.Sequential()
+
         # Initialize the model with the user data
         print("Initializing Model...")
         model = intializeModel(userInfo, model)
+
         # Compile the model
         print("Compiling Model...")
         model = compileModel(model)
+
         # Train the model with the MNIST dataset
         print("Training Model...")
         print("Beginning Training with", userInfo[2], "epochs:")
@@ -83,9 +86,14 @@ def welcomeUser():
     A function that displays a welcome message
     :return:
     """
+    print("**********************************************************************")
+    print()
     print("Hello! Welcome to Alex Worland's Artificial Neural Network Profiler!")
-    print("This tool profiles a simple ANN that can predict the value of handwritten digits 0-9")
-
+    print()
+    print("This tool profiles a simple ANN that can predict the value of handwritten digits 0-9 using the MNIST dataset.")
+    print()
+    print("**********************************************************************")
+    print()
 
 def getUserInfo(activationFunctionMap):
     """
@@ -93,7 +101,6 @@ def getUserInfo(activationFunctionMap):
     :param activationFunctionMap:
     :return:
     """
-    # TODO: Try/Catch for input mismatch
     flag = True
     while flag:
         try:
@@ -103,6 +110,8 @@ def getUserInfo(activationFunctionMap):
             print()
             numEpochs = int(input("How many epochs would you like to train the network? : "))
             print()
+            print("******************************************************************")
+            print()
             print("What activation function would you like to use for those neurons?")
             print()
             for i in range(len(activationFunctionMap)):
@@ -110,12 +119,16 @@ def getUserInfo(activationFunctionMap):
             print()
             activationFunction = int(input("Please enter the activation function's number: "))
             print()
+            print("******************************************************************")
+            print()
             print("What device would you like to train this network on?")
             devices = device_lib.list_local_devices()
             for i in range(len(devices)):
                 print(i, " : ", devices[i])
+            device = int(input("Please enter the device you would like to train the network with: "))
             print()
-            device = int(input("Please enter the device you would like to train the network on: "))
+            print("******************************************************************")
+            print()
             device = devices[device].name
             flag = False
         except ValueError:
@@ -127,21 +140,18 @@ def getUserInfo(activationFunctionMap):
 def intializeModel(userInfo, model):
     """
     A function that initializes the model based on the user input
-    :param userInfo:
-    :param model:
+    :param userInfo: an array containing relevant information from the user
+    :param model: a neural network model created to user specifications
     :return:
     """
+    # Get user information from userInfo array
     numHiddenLayers = userInfo[0]
     numNeurons = userInfo[1]
     numEpochs = userInfo[2]
-
-    # TODO: Might give trouble. May need to reverse map. Will also need a map that maps full activation function
-    #   name to shorthand. Could use activations.deserialize instead
-
     activationFunction = activFuncSelectionMap.get(userInfo[3])
+
     # Create new model based on user selections
     model = NeuralNetwork(numHiddenLayers, numNeurons, numEpochs, activationFunction)
-    model.createModel()
     return model
 
 
@@ -170,13 +180,6 @@ def trainModel(model, mnistData):
 if __name__ == '__main__':
     # Required environment flags for macos
     # TODO: Look into reason why
-    import os
-
-    os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-    # choice to use gpu or cpu for training
-    # with tensorFlow.device("/gpu:0"):
-    #    main()
-    # with tensorFlow.device("/cpu:0"):
-    #     main()
-    # TODO: Add capability to choose what device to train with
+    # import os
+    # os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
     main()
