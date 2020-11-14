@@ -14,6 +14,9 @@ Description:
     own digit with their mouse and see the network work visually and see the prediction and accuracy displayed.
 """
 print("\nInitializing...")
+# Disable tensorflow logging
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = "1"
 import tensorflow as tensorFlow
 from tensorflow.python.client import device_lib
 import time
