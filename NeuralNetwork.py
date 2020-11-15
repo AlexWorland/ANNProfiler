@@ -28,7 +28,6 @@ class NeuralNetwork:
         self.numNeuronsPerHLayer = numNeuronsPerHLayer
         self.numEpochs = trainingEpochs
         self.activationFunctionHidden = activationFunction
-        self.createModel()
 
     def initFromNumHiddenLayers(self, numHiddenLayers):
         self.numHiddenLayers = numHiddenLayers
