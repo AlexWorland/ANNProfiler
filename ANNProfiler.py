@@ -16,6 +16,7 @@ Description:
 print("\nInitializing...")
 # Disable tensorflow logging
 import os
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = "1"
 import tensorflow as tensorFlow
 from tensorflow.python.client import device_lib
@@ -57,10 +58,10 @@ measurements = {0: "Number of Neurons vs Training Time",
                 4: "Number of Hidden Layers vs Training Accuracy",
                 5: "Number of Epochs vs Training Accuracy"}
 patterns = {
-    0: "Linear",
-    1: "Exponential (Warning: This can grow very fast. Please choose a small initial number.)",
-    2: "Polynomial (Warning: This can grow very fast. Please choose a small initial number.)",
-    3: "Manual"
+    0: "Linear Function",
+    1: "Exponential Function (Warning: This can grow very fast. Please choose a small initial number.)",
+    2: "Polynomial Function (Warning: This can grow very fast. Please choose a small initial number.)",
+    3: "Manual Entry"
     # TODO: Consider also: logarithmic, reciprocal, trigonometric, nth root
 }
 
@@ -71,8 +72,24 @@ def main():
 
     measurementType = getMeasurementTypeFromUser()
 
-    values = measurementPrompts(measurementType)
+    networks = measurementPrompts(measurementType)
 
+    networks = createNetworks(networks)
+
+    device = deviceSelectionPrompt()
+
+    print("Training is about to begin. Depending on your selections, this can take a long time.")
+    print()
+    print("You have selected device:", device_lib.list_local_devices()[device])
+    confirmationPrompt()
+
+    mnist = initializeMNISTData()
+
+    startTimes, endTimes = trainNetworks(networks, mnist)
+
+    runtimes = calculateRuntimes(startTimes, endTimes)
+
+    print(runtimes)
     # # Get the number of hidden layers, neurons, and epochs from user
     # userInfo = getUserInfo(activFuncSelectionMap)
 
@@ -180,11 +197,6 @@ def getMeasurementTypeFromUser():
     return measurement
 
 
-def initializeNetworkList(measurement):
-    print()
-    print("How many networks would you like to measure?")
-
-
 def measurementPrompts(measurement):
     switch = {
         0: neuronsVsTime,
@@ -201,32 +213,63 @@ def measurementPrompts(measurement):
 
 def neuronsVsTime():
     layerSizes = []
+    networks = []
     print("**********************************************************************")
     print()
-    numHiddenLayers = input("How many hidden layers would you like each network to have?")
-    numHiddenLayers = int(numHiddenLayers)
-    print()
-    print("How would you like to alter the number of neurons per hidden layer in each network?")
-    print()
-    for i in range(len(patterns)):
-        print(i, ":", patterns.get(i))
-    print()
-    patternType = input("Please enter the pattern's number: ")
-    patternType = int(patternType)
-    # print()
-    # firstHLayerSize = input("How many neurons would you like your first layer to have? : ")
-    # firstHLayerSize = int(firstHLayerSize)
-    # print()
-    # if patternType == 2:
-    #     layerSizes.append(firstHLayerSize)
-    #     for i in range(1, numHiddenLayers):
-    #         numNeurons = input("How many neurons should network" + str(i + 1) + "/" + str(numHiddenLayers) + "have? : ")
-    #         numNeurons = int(numNeurons)
-    #         layerSizes.append(numNeurons)
-    # else:
-    #     layerSizes = patternFunctions(patternType, numHiddenLayers, firstHLayerSize)
+    numNetworks = inputPrompt("How many networks would you like to measure?: ", int)
 
-    layerSizes = patternFunctions(patternType, numHiddenLayers)
+    numHiddenLayers = inputPrompt("How many hidden layers would you like each network to have?", int)
+
+    patternType = multiSelectPrompt(
+        "How would you like to alter the number of neurons per hidden layer in each network?",
+        "Please enter the pattern's number: ",
+        patterns
+    )
+
+    layerSizes = patternFunctions(patternType, numNetworks)
+
+    epochs = inputPrompt("How many epochs would you like to train each network?: ", int)
+
+    activationFunctionSelection = multiSelectPrompt(
+        "What activation function would you like to use for the hidden layers' neurons?",
+        "Please enter the function's number: ",
+        activFuncSelectionMap)
+
+    activationFunction = activFuncKerasMap.get(activationFunctionSelection)
+
+    for i in range(numNetworks):
+        networks.append(NeuralNetwork(numHiddenLayers, layerSizes[i], epochs, activationFunction))
+
+    return networks
+
+
+def createNetworks(networks):
+    print("Creating Networks...")
+    for network in networks:
+        network.createModel()
+    print("Compiling Networks...")
+    for network in networks:
+        network.compileModel()
+    return networks
+
+
+def trainNetworks(networks, mnistData):
+    startTimes = []
+    endTimes = []
+    print("Training networks...")
+    for i in range(len(networks)):
+        print("Training network", i, "of", len(networks), "...")
+        startTimes.append(time.perf_counter())
+        trainModel(networks[i], mnistData)
+        endTimes.append(time.perf_counter())
+    return startTimes, endTimes
+
+
+def calculateRuntimes(startTimes, endTimes):
+    runTimes = []
+    for i in range(len(startTimes)):
+        runTimes = endTimes[i] - startTimes[i]
+    return runTimes
 
 
 def patternFunctions(patternType, patternSize):
@@ -271,7 +314,7 @@ def linearFunction(patternSize):
         for i in range(patternSize):
             values.append(coefficient * (variableStart + i) + constant)
 
-        print("Values will be", values)
+        print("Values will be:", values)
 
         confirmation = confirmationPrompt()
         if confirmation:
@@ -380,6 +423,40 @@ def inputPrompt(message, typeVar):
     return value
 
 
+def multiSelectPrompt(message, query, lst):
+    flag = True
+    selection = None
+    while flag:
+        print()
+        print(message)
+        print()
+        if type(lst) == dict:
+            for i in range(len(lst)):
+                print(i, ":", lst.get(i))
+        else:
+            for i in range(len(lst)):
+                print(i, ":", lst[i])
+        print()
+        selection = inputPrompt(query, int)
+        if selection >= len(lst) or selection < 0:
+            inputError(selection)
+        else:
+            flag = False
+    return selection
+
+
+def deviceSelectionPrompt():
+    devices = device_lib.list_local_devices()
+    confirmed = False
+    while not confirmed:
+        deviceSelection = multiSelectPrompt(
+            "What device would you like to train the networks with?",
+            "Please select the device's number: ",
+            devices)
+        confirmed = confirmationPrompt()
+    return devices[deviceSelection]
+
+
 def confirmationPrompt():
     flag = True
     message = "Is that ok? (y/n) : "
@@ -421,11 +498,11 @@ def getUserInfo(activationFunctionMap):
     flag = True
     while flag:
         try:
-            numHiddenLayers = int(input("How many hidden layers would you like the network to have?:"))
+            numHiddenLayers = int(input("How many hidden layers would you like the network to have?: "))
             print()
-            numNeurons = int(input("How many neurons would you like those layers to have?:"))
+            numNeurons = int(input("How many neurons would you like those layers to have?: "))
             print()
-            numEpochs = int(input("How many epochs would you like to train the network?:"))
+            numEpochs = int(input("How many epochs would you like to train the network?: "))
             print()
             print("**********************************************************************")
             print()
@@ -471,6 +548,13 @@ def initializeModel(userInfo):
     # Create new model based on user selections
     model = NeuralNetwork(numHiddenLayers, numNeurons, numEpochs, activationFunctionKeras)
     return model
+
+
+def initializeMNISTData():
+    # Initialize the MNIST dataset
+    print("Initializing MNIST dataset...")
+    mnistData = MNISTData()
+    return mnistData
 
 
 def compileModel(model):
