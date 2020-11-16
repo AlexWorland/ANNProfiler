@@ -16,14 +16,10 @@ class NeuralNetwork:
     """
 
     # Default Values
-    numHiddenLayers = 1
-    numNeuronsPerHLayer = 128
-    numEpochs = 10
-    model = tensorFlow.keras.models.Sequential()
-    activationFunctionHidden = 'relu'
     activationFunctionOutput = 'softmax'
 
     def __init__(self, numHiddenLayers, numNeuronsPerHLayer, trainingEpochs, activationFunction):
+        self.model = tensorFlow.keras.models.Sequential()
         self.numHiddenLayers = numHiddenLayers
         self.numNeuronsPerHLayer = numNeuronsPerHLayer
         self.numEpochs = trainingEpochs
