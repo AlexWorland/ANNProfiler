@@ -16,13 +16,14 @@ Description:
 print("\nInitializing...")
 # Disable tensorflow logging
 import os
-
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = "1"
 import tensorflow as tensorFlow
 from tensorflow.python.client import device_lib
 import time
 from FinalProject.MNISTDataset import MNIST as MNISTData
 from FinalProject.NeuralNetwork import NeuralNetwork as NeuralNetwork
+import matplotlib as plt
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = "1"
 
 activFuncSelectionMap = {0: "Rectified Linear (Recommended For Hidden Layer(s))",
                          1: "Linear",
@@ -67,64 +68,45 @@ def main():
     # Display the welcome prompt
     welcomeUser()
 
-    measurementType = getMeasurementTypeFromUser()
+    # Get config from user
+    measurementType, measurementValues, device = getUserInfo()
 
-    networks = measurementPrompts(measurementType)
+    # Create the networks using the user specified device
+    # TODO: Consider adding multiple execution modes
 
-    device = deviceSelectionPrompt()
+    # Create networks using user specified device
+    networks = createNetworks(measurementValues, device)
 
-    with tensorFlow.device(device.name):
-        networks = createNetworks(networks)
-
+    ########
     # Debug for models
     models = []
     for network in networks:
         models.append(network.model)
+    ########
 
-    print("Training is about to begin. Depending on your selections, this can take a long time.")
-    print()
-    confirmationPrompt()
-
+    # Initialize the training data
     mnist = initializeMNISTData()
 
     # TODO: Document that metrics[0] is loss and metrics[1] is accuracy. Each is found by .result()
-    with tensorFlow.device(device.name):
-        startTimes, endTimes, metrics = trainNetworks(networks, mnist)
+    networks, startTimes, endTimes, metrics = trainNetworks(networks, mnist, device)
 
-    accuracies = []
-    losses = []
-    for network in networks:
-        accuracies.append(network.model.metrics[1].result())
-        losses.append(network.model.metrics[0].result())
+    accuracies, losses = getNetworkMetrics(networks)
 
     runtimes = calculateRuntimes(startTimes, endTimes)
 
-    print(runtimes)
-    # # Get the number of hidden layers, neurons, and epochs from user
-    # userInfo = getUserInfo(activFuncSelectionMap)
 
-    # with tensorFlow.device(userInfo[4]):
-    #     # Initialize the MNIST dataset
-    #     mnistData = MNISTData()
-    #
-    #     # Initialize the model with the user data
-    #     print("Initializing Model...")
-    #     model = intializeModel(userInfo)
-    #
-    #     # Compile the model
-    #     print("Compiling Model...")
-    #     model = compileModel(model)
-    #
-    #     # Train the model with the MNIST dataset
-    #     print("Training Model...")
-    #     print("Beginning Training with", userInfo[2], "epochs:")
-    #     startTime = time.perf_counter()
-    #     model = trainModel(model, mnistData)
-    #     endTime = time.perf_counter()
-    #     totalTrainingTime = endTime - startTime
-    #     print(totalTrainingTime, "seconds.")
-    #     # TODO: Display training metrics
 
+def getUserInfo():
+    # Get measurement type from the user
+    measurementType = getMeasurementTypeFromUser()
+
+    # Get the networks to measure
+    measurementValues = generateMeasurementValues(measurementType)
+
+    # Get device to train with from user
+    device = deviceSelectionPrompt()
+
+    return measurementType, measurementValues, device
 
 def welcomeUser():
     """
@@ -132,56 +114,56 @@ def welcomeUser():
     :return:
     """
     print("**********************************************************************")
-    print()
+
     print("Hello! Welcome to Alexandra Worland's Artificial Neural Network Profiler!")
-    print()
+
     print(
         "This tool profiles a simple ANN that can predict the value of handwritten digits 0-9 using the MNIST dataset.")
-    print()
+
     print("**********************************************************************")
-    print()
 
 
-def getUserInfo(activationFunctionMap):
-    """
-    A function that prompts and retrieves user input
-    :param activationFunctionMap:
-    :return:
-    """
-    flag = True
-    while flag:
-        try:
-            numHiddenLayers = int(input("How many hidden layers would you like the network to have?: "))
-            print()
-            numNeurons = int(input("How many neurons would you like those layers to have?: "))
-            print()
-            numEpochs = int(input("How many epochs would you like to train the network?: "))
-            print()
-            print("**********************************************************************")
-            print()
-            print("What activation function would you like to use for those neurons?")
-            print()
-            for i in range(len(activationFunctionMap)):
-                print(i, ":", activationFunctionMap.get(i))
-            print()
-            activationFunction = int(input("Please enter the activation function's number: "))
-            print()
-            print("**********************************************************************")
-            print()
-            print("What device would you like to train this network on?")
-            devices = device_lib.list_local_devices()
-            for i in range(len(devices)):
-                print(i, ":", devices[i])
-            device = int(input("Please enter the device you would like to train the network with: "))
-            print()
-            print("**********************************************************************")
-            print()
-            device = devices[device].name
-            flag = False
-        except ValueError:
-            print("Please enter a valid number.")
 
-    return [numHiddenLayers, numNeurons, numEpochs, activationFunction, device]
+# def getUserInfo(activationFunctionMap):
+#     """
+#     A function that prompts and retrieves user input
+#     :param activationFunctionMap:
+#     :return:
+#     """
+#     flag = True
+#     while flag:
+#         try:
+#             numHiddenLayers = inputPrompt("How many hidden layers would you like the network to have?: ", int)
+#
+#             numNeurons = inputPrompt("How many neurons would you like those layers to have?: ", int)
+#
+#             numEpochs = inputPrompt("How many epochs would you like to train the network?: ", int)
+#
+#             print("**********************************************************************")
+#
+#             print("What activation function would you like to use for those neurons?")
+#
+#             for i in range(len(activationFunctionMap)):
+#                 print(i, ":", activationFunctionMap.get(i))
+#
+#             activationFunction = int(input("Please enter the activation function's number: "))
+#
+#             print("**********************************************************************")
+#
+#             print("What device would you like to train this network on?")
+#             devices = device_lib.list_local_devices()
+#             for i in range(len(devices)):
+#                 print(i, ":", devices[i])
+#             device = int(input("Please enter the device you would like to train the network with: "))
+#
+#             print("**********************************************************************")
+#
+#             device = devices[device].name
+#             flag = False
+#         except ValueError:
+#             print("Please enter a valid number.")
+#
+#     return [numHiddenLayers, numNeurons, numEpochs, activationFunction, device]
 
 
 def getMeasurementTypeFromUser():
@@ -194,19 +176,19 @@ def getMeasurementTypeFromUser():
     # Loop to ensure user input is in the correct format
     flag = True
     while flag:
-        print()
+
         print("**********************************************************************")
         while flag:
             try:
-                print()
+
                 print("What would you like to measure?")
-                print()
+
 
                 # List the different measurement types
                 for i in range(len(measurementTypes)):
                     print(i, ":", measurementTypes.get(i))
 
-                print()
+
                 measurement = input("Please enter the measurement's number: ")
                 # Cast input to int
                 measurement = int(measurement)
@@ -225,9 +207,9 @@ def getMeasurementTypeFromUser():
         flag = True
         while flag:
             try:
-                print()
+
                 print("You have selected: \"", measurementTypes.get(measurement), "\"")
-                print()
+
                 confirmation = input("Is that correct? (y/n): ")
 
                 # Cast input to string
@@ -241,9 +223,9 @@ def getMeasurementTypeFromUser():
                 else:
                     # If not y or n, throw a value error
                     raise ValueError
-                print()
+
                 print("**********************************************************************")
-                print()
+
             except ValueError:
                 inputError(confirmation)
     return measurement
@@ -253,7 +235,7 @@ def getNumNetworksFromUser():
     return numNetworks
 
 def getNumHiddenLayersFromUser():
-    numHiddenLayers = inputPrompt("How many hidden layers would you like each network to have?", int)
+    numHiddenLayers = inputPrompt("How many hidden layers would you like each network to have?: ", int)
     return numHiddenLayers
 
 def getPatternTypeFromUser(variable):
@@ -283,7 +265,7 @@ def neuronsVsTime():
     layerSizes = []
     networks = []
     print("**********************************************************************")
-    print()
+
     numNetworks = getNumNetworksFromUser()
 
     numHiddenLayers = getNumHiddenLayersFromUser()
@@ -310,7 +292,7 @@ def hiddenLayersVsTime():
     numHiddenLayers = []
     networks = []
     print("**********************************************************************")
-    print()
+
     numNetworks = getNumNetworksFromUser()
 
     patternType = getPatternTypeFromUser("hidden layers")
@@ -334,7 +316,7 @@ def numEpochsVsTime():
     numEpochs = []
     networks = []
     print("**********************************************************************")
-    print()
+
     numNetworks = getNumNetworksFromUser()
 
     patternType = getPatternTypeFromUser("training epochs")
@@ -377,20 +359,20 @@ def linearFunction(patternSize):
 
     while flag:
         while flag:
-            print()
+
             print("A linear function will be represented as \"y = mx + b\"")
-            print()
+
 
             coefficient = inputPrompt("What should the value of m be?: ", int)
-            print()
-            constant = inputPrompt("What should the value of b be? : ", int)
-            print()
-            variableStart = inputPrompt("What should the starting value of x be? : ", int)
-            print()
 
-            print()
+            constant = inputPrompt("What should the value of b be? : ", int)
+
+            variableStart = inputPrompt("What should the starting value of x be? : ", int)
+
+
+
             print("Function will be: y =", str(coefficient) + "x + " + str(constant))
-            print()
+
 
             confirmation = confirmationPrompt()
             if confirmation:
@@ -415,18 +397,18 @@ def polynomialFunction(patternSize):
     flag = True
     while flag:
         while flag:
-            print()
+
             print("A polynomial function will be represented as \"y = x^n\"")
-            print()
+
 
             power = inputPrompt("What should the value of n be?", int)
-            print()
-            variableStart = inputPrompt("What should the starting value of x be?", int)
-            print()
 
-            print()
+            variableStart = inputPrompt("What should the starting value of x be?", int)
+
+
+
             print("Function will be: y = x^" + str(power))
-            print()
+
 
             confirmation = confirmationPrompt()
             if confirmation:
@@ -451,14 +433,14 @@ def exponentialFunction(patternSize):
     flag = True
     while flag:
         while flag:
-            print()
+
             print("An exponential function will be represented as \"y = n^x\"")
-            print()
+
 
             constant = inputPrompt("What should the value of n be? : ", int)
-            print()
+
             variableStart = inputPrompt("What should the starting value of x be? : ", int)
-            print()
+
 
             print("Function will be: y=", str(constant) + "^x")
 
@@ -514,16 +496,16 @@ def multiSelectPrompt(message, query, lst):
     flag = True
     selection = None
     while flag:
-        print()
+
         print(message)
-        print()
+
         if type(lst) == dict:
             for i in range(len(lst)):
                 print(i, ":", lst.get(i))
         else:
             for i in range(len(lst)):
                 print(i, ":", lst[i])
-        print()
+
         selection = inputPrompt(query, int)
         if selection >= len(lst) or selection < 0:
             inputError(selection)
@@ -545,11 +527,13 @@ def deviceSelectionPrompt():
     return devices[deviceSelection]
 
 
-def confirmationPrompt():
+def confirmationPrompt(*message):
     flag = True
-    message = "Is that ok? (y/n) : "
+    if message != None:
+        print(message)
+    confimationMsg = "Is that ok? (y/n) : "
     while flag:
-        choice = inputPrompt(message, str).lower()
+        choice = inputPrompt(confimationMsg, str).lower()
         if choice == 'y':
             return True
         elif choice == 'n':
@@ -558,7 +542,7 @@ def confirmationPrompt():
             inputError(choice)
 
 
-def measurementPrompts(measurement):
+def generateMeasurementValues(measurement):
     switch = {
         0: neuronsVsTime,
         1: hiddenLayersVsTime,
@@ -576,11 +560,11 @@ def inputError(thrownValue):
     :param thrownValue: The invalid input
     :return:
     """
-    print()
+
     print("**********************************************************************")
     print("Option: \"", thrownValue, "\" is invalid. Please enter a valid option.")
     print("**********************************************************************")
-    print()
+
 
 
 def initializeMNISTData():
@@ -590,31 +574,42 @@ def initializeMNISTData():
     return mnistData
 
 
-def createNetworks(networks):
-    print("Creating Networks...")
-    for network in networks:
-        network.createModel()
-    print("Compiling Networks...")
-    for network in networks:
-        network.compileModel()
-    return networks
+def createNetworks(networks, device):
+    with tensorFlow.device(device.name):
+        print("Creating Networks...")
+        for network in networks:
+            network.createModel()
+        print("Compiling Networks...")
+        for network in networks:
+            network.compileModel()
+        return networks
 
 
-def trainNetworks(networks, mnistData):
+def trainNetworks(networks, mnistData, device):
     startTimes = []
     endTimes = []
     metrics = []
-    print("Training networks...")
-    for i in range(len(networks)):
-        print("Training network", i+1, "of", len(networks), "...")
-        startTimes.append(time.perf_counter())
-        trainModel(networks[i], mnistData)
-        endTimes.append(time.perf_counter())
-        metrics.append(networks[i].model.metrics)
-        print(networks[i].model.metrics[1].result())
+    flag = confirmationPrompt("Training is about to begin.")
+    if flag:
+        print("Training networks...")
+        with tensorFlow.device(device.name):
+            for i in range(len(networks)):
+                print("Training network", i+1, "of", len(networks), "...")
+                startTimes.append(time.perf_counter())
+                trainModel(networks[i], mnistData)
+                endTimes.append(time.perf_counter())
+                metrics.append(networks[i].model.metrics)
+        return networks, startTimes, endTimes, metrics
+    else:
+        return [], [], [], []
 
-    return startTimes, endTimes, metrics
-
+def getNetworkMetrics(networks):
+    accuracies = []
+    losses = []
+    for network in networks:
+        accuracies.append(network.model.metrics[1].result())
+        losses.append(network.model.metrics[0].result())
+    return accuracies, losses
 
 def initializeModel(userInfo):
     """
