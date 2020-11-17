@@ -16,14 +16,15 @@ Description:
 print("\nInitializing...")
 # Disable tensorflow logging
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = "1"
 import tensorflow as tensorFlow
 from tensorflow.python.client import device_lib
 import time
 from FinalProject.MNISTDataset import MNIST as MNISTData
 from FinalProject.NeuralNetwork import NeuralNetwork as NeuralNetwork
-import matplotlib as plt
-
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = "1"
+import matplotlib
+matplotlib.use("TKagg")
+import matplotlib.pyplot as plt
 
 activFuncSelectionMap = {0: "Rectified Linear (Recommended For Hidden Layer(s))",
                          1: "Linear",
@@ -65,48 +66,63 @@ patterns = {
 
 
 def main():
-    # Display the welcome prompt
-    welcomeUser()
 
-    # Get config from user
-    measurementType, measurementValues, device = getUserInfo()
+    # Debug
+    plt.plot([1,2,3,4,5])
 
-    # Create the networks using the user specified device
-    # TODO: Consider adding multiple execution modes
+    flag = True
+    while flag:
+        # Display the welcome prompt
+        welcomeUser()
 
-    # Create networks using user specified device
-    networks = createNetworks(measurementValues, device)
+        # Get measurement type from the user
+        measurementType = getMeasurementTypeFromUser()
 
-    ########
-    # Debug for models
-    models = []
-    for network in networks:
-        models.append(network.model)
-    ########
+        # Get the networks to measure
+        unintializedNetworks, xAxisValues = generateUnintializedNetworks(measurementType)
 
-    # Initialize the training data
-    mnist = initializeMNISTData()
+        # Get device to train with from user
+        device = deviceSelectionPrompt()
 
-    # TODO: Document that metrics[0] is loss and metrics[1] is accuracy. Each is found by .result()
-    networks, startTimes, endTimes, metrics = trainNetworks(networks, mnist, device)
+        # Create the networks using the user specified device
+        # TODO: Consider adding multiple execution modes
 
-    accuracies, losses = getNetworkMetrics(networks)
+        # Create networks using user specified device
+        networks = createNetworks(unintializedNetworks, device)
 
-    runtimes = calculateRuntimes(startTimes, endTimes)
+        ########
+        # Debug for models
+        models = []
+        for network in networks:
+            models.append(network.model)
+        ########
 
+        flag = confirmationPrompt("Training is about to begin. Depending on your configuration this may take a long time.")
+        if flag:
+            # Initialize the training data
+            mnist = initializeMNISTData()
 
+            # TODO: Document that metrics[0] is loss and metrics[1] is accuracy. Each is found by .result()
+            networks, startTimes, endTimes, metrics = trainNetworks(networks, mnist, device)
 
-def getUserInfo():
-    # Get measurement type from the user
-    measurementType = getMeasurementTypeFromUser()
+            accuracies, losses = getNetworkMetrics(networks)
 
-    # Get the networks to measure
-    measurementValues = generateMeasurementValues(measurementType)
+            runtimes = calculateRuntimes(startTimes, endTimes)
 
-    # Get device to train with from user
-    device = deviceSelectionPrompt()
+            print(accuracies)
+            print(losses)
+            print(runtimes)
 
-    return measurementType, measurementValues, device
+            plt.plot(xAxisValues, accuracies)
+            plt.show()
+
+            while True:
+                x = 3 # do nothing
+
+            flag = False
+        else:
+            flag = True
+
 
 def welcomeUser():
     """
@@ -171,64 +187,8 @@ def getMeasurementTypeFromUser():
     A function that gets the measurement type from the user
     :return: An integer representing the measurement type
     """
-
-    # TODO: This type of thing happens a lot, maybe refactor it into something that can handle it?
-    # Loop to ensure user input is in the correct format
-    flag = True
-    while flag:
-
-        print("**********************************************************************")
-        while flag:
-            try:
-
-                print("What would you like to measure?")
-
-
-                # List the different measurement types
-                for i in range(len(measurementTypes)):
-                    print(i, ":", measurementTypes.get(i))
-
-
-                measurement = input("Please enter the measurement's number: ")
-                # Cast input to int
-                measurement = int(measurement)
-
-                # Check if the input is within range
-                if measurement >= len(measurementTypes) or measurement < 0:
-                    flag = True
-                    raise ValueError
-                else:
-                    flag = False
-            # If input is invalid, inform user and restart loop
-            except ValueError:
-                inputError(measurement)
-
-        # Loop to ensure user input is in the correct format
-        flag = True
-        while flag:
-            try:
-
-                print("You have selected: \"", measurementTypes.get(measurement), "\"")
-
-                confirmation = input("Is that correct? (y/n): ")
-
-                # Cast input to string
-                confirmation = str(confirmation).lower()
-
-                # Check if input is y or n
-                if confirmation == 'y':
-                    flag = False
-                elif confirmation == 'n':
-                    flag = True
-                else:
-                    # If not y or n, throw a value error
-                    raise ValueError
-
-                print("**********************************************************************")
-
-            except ValueError:
-                inputError(confirmation)
-    return measurement
+    measurementType = multiSelectPrompt("What would you like to measure?", "Please enter the measurement's number: ",measurementTypes)
+    return measurementType
 
 def getNumNetworksFromUser():
     numNetworks = inputPrompt("How many networks would you like to measure?: ", int)
@@ -285,7 +245,7 @@ def neuronsVsTime():
     for i in range(numNetworks):
         networks.append(NeuralNetwork(numHiddenLayers, layerSizes[i], numEpochs, activationFunction))
 
-    return networks
+    return networks, layerSizes
 
 
 def hiddenLayersVsTime():
@@ -310,7 +270,7 @@ def hiddenLayersVsTime():
     for i in range(numNetworks):
         networks.append(NeuralNetwork(numHiddenLayers[i], numNeurons, numEpochs, activationFunction))
 
-    return networks
+    return networks, numHiddenLayers
 
 def numEpochsVsTime():
     numEpochs = []
@@ -334,7 +294,7 @@ def numEpochsVsTime():
     for i in range(numNetworks):
         networks.append(NeuralNetwork(numHiddenLayers, numNeurons, numEpochs[i], activationFunction))
 
-    return networks
+    return networks, numEpochs
 
 # def neuronsVsAccuracy():
 # def hiddenLayersVsAccuracy():
@@ -359,9 +319,7 @@ def linearFunction(patternSize):
 
     while flag:
         while flag:
-
             print("A linear function will be represented as \"y = mx + b\"")
-
 
             coefficient = inputPrompt("What should the value of m be?: ", int)
 
@@ -370,24 +328,24 @@ def linearFunction(patternSize):
             variableStart = inputPrompt("What should the starting value of x be? : ", int)
 
 
-
-            print("Function will be: y =", str(coefficient) + "x + " + str(constant))
-
-
+            function = "y = " + str(coefficient) + "x + " + str(constant)
+            print("Function will be:", function)
             confirmation = confirmationPrompt()
             if confirmation:
                 flag = False
-
         flag = True
-
         for i in range(patternSize):
-            values.append(coefficient * (variableStart + i) + constant)
-
-        print("Values will be:", values)
-
-        confirmation = confirmationPrompt()
-        if confirmation:
-            flag = False
+            value = coefficient * (variableStart + i) + constant
+            if value <= 0:
+                valueError(value, variableStart + i, function)
+                flag = False
+                break
+            values.append(value)
+        if flag:
+            print("Values will be:", values)
+            confirmation = confirmationPrompt()
+            if confirmation:
+                flag = False
 
     return values
 
@@ -527,13 +485,13 @@ def deviceSelectionPrompt():
     return devices[deviceSelection]
 
 
-def confirmationPrompt(*message):
+def confirmationPrompt(*args):
     flag = True
-    if message != None:
-        print(message)
-    confimationMsg = "Is that ok? (y/n) : "
+    confirmationMsg = "Is that ok? (y/n) : "
+    for msg in args:
+        print(msg)
     while flag:
-        choice = inputPrompt(confimationMsg, str).lower()
+        choice = inputPrompt(confirmationMsg, str).lower()
         if choice == 'y':
             return True
         elif choice == 'n':
@@ -541,8 +499,7 @@ def confirmationPrompt(*message):
         else:
             inputError(choice)
 
-
-def generateMeasurementValues(measurement):
+def generateUnintializedNetworks(measurement):
     switch = {
         0: neuronsVsTime,
         1: hiddenLayersVsTime,
@@ -565,6 +522,11 @@ def inputError(thrownValue):
     print("Option: \"", thrownValue, "\" is invalid. Please enter a valid option.")
     print("**********************************************************************")
 
+def valueError(value, variable, function):
+    print("**********************************************************************")
+    print("Error:", function, "at x =", variable, "equals", value, "which is out of bounds.")
+    print("Please ensure that all values are greater than zero.")
+    print("**********************************************************************")
 
 
 def initializeMNISTData():
@@ -589,26 +551,22 @@ def trainNetworks(networks, mnistData, device):
     startTimes = []
     endTimes = []
     metrics = []
-    flag = confirmationPrompt("Training is about to begin.")
-    if flag:
-        print("Training networks...")
-        with tensorFlow.device(device.name):
-            for i in range(len(networks)):
-                print("Training network", i+1, "of", len(networks), "...")
-                startTimes.append(time.perf_counter())
-                trainModel(networks[i], mnistData)
-                endTimes.append(time.perf_counter())
-                metrics.append(networks[i].model.metrics)
-        return networks, startTimes, endTimes, metrics
-    else:
-        return [], [], [], []
+    print("Training networks...")
+    with tensorFlow.device(device.name):
+        for i in range(len(networks)):
+            print("Training network", i+1, "of", len(networks), "...")
+            startTimes.append(time.perf_counter())
+            trainModel(networks[i], mnistData)
+            endTimes.append(time.perf_counter())
+            metrics.append(networks[i].model.metrics)
+    return networks, startTimes, endTimes, metrics
 
 def getNetworkMetrics(networks):
     accuracies = []
     losses = []
     for network in networks:
-        accuracies.append(network.model.metrics[1].result())
-        losses.append(network.model.metrics[0].result())
+        accuracies.append(network.model.metrics[1].result().numpy().item())
+        losses.append(network.model.metrics[0].result().numpy().item())
     return accuracies, losses
 
 def initializeModel(userInfo):
