@@ -23,7 +23,6 @@ import time
 from FinalProject.MNISTDataset import MNIST as MNISTData
 from FinalProject.NeuralNetwork import NeuralNetwork as NeuralNetwork
 import matplotlib
-matplotlib.use("TKagg")
 import matplotlib.pyplot as plt
 
 activFuncSelectionMap = {0: "Rectified Linear (Recommended For Hidden Layer(s))",
@@ -68,8 +67,8 @@ patterns = {
 def main():
 
     # Debug
-    plt.plot([1,2,3,4,5])
-    plt.show()
+    # plt.plot([1,2,3,4,5])
+    # plt.show()
 
     flag = True
     while flag:
