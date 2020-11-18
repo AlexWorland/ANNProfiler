@@ -9,5 +9,4 @@ These factors include:
  
  Dependencies:
   Tensorflow (For GPU support follow tensorflow's instructions on how to set up tensorflow with a gpu as it is different for each operating system)
-  Keras
   Matplotlib
