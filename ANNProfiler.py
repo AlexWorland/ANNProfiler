@@ -89,7 +89,7 @@ def main():
         action = getActionFromUser()
 
         # If the action is the last element of actionTypes, exit the program
-        if action == len(actionTypes) - 1:
+        if action == len(actionTypes):
             programExit()
 
         # Get the networks to measure
@@ -246,7 +246,7 @@ def measureNeurons():
     for i in range(numNetworks):
         networks.append(NeuralNetwork(numHiddenLayers, layerSizes[i], numEpochs, activationFunction))
 
-    return networks
+    return networks, layerSizes
 
 
 def measureHiddenLayers():
@@ -287,7 +287,7 @@ def measureHiddenLayers():
     for i in range(numNetworks):
         networks.append(NeuralNetwork(numHiddenLayers[i], numNeurons, numEpochs, activationFunction))
 
-    return networks
+    return networks, numHiddenLayers
 
 
 def measureEpochs():
@@ -328,7 +328,7 @@ def measureEpochs():
     for i in range(numNetworks):
         networks.append(NeuralNetwork(numHiddenLayers, numNeurons, numEpochs[i], activationFunction))
 
-    return networks
+    return networks, numEpochs
 
 
 def getValuesFromPattern(patternType, patternSize):
@@ -340,10 +340,10 @@ def getValuesFromPattern(patternType, patternSize):
     """
     # A switch of functions that can be selected based on the pattern type
     switch = {
-        0: linearFunction,
-        1: exponentialFunction,
-        2: polynomialFunction,
-        3: manualEntry
+        1: linearFunction,
+        2: exponentialFunction,
+        3: polynomialFunction,
+        4: manualEntry
     }
     # Get the function that the user specified
     patternFunction = switch.get(patternType)
@@ -366,11 +366,10 @@ def linearFunction(patternSize):
         # Get user specified linear function
         while flag:
             print()
-            print("A linear function will be represented as \"y = mx + b\"")
+            print("A linear function will be represented as \"y = mx\"")
             coefficient = inputPrompt("What should the value of m be?: ", int)
-            constant = inputPrompt("What should the value of b be? : ", int)
             variableStart = inputPrompt("What should the starting value of x be? : ", int)
-            function = "y = " + str(coefficient) + "x + " + str(constant)
+            function = "y = " + str(coefficient) + "x"
             print()
             print("Function will be:", function)
 
@@ -384,7 +383,7 @@ def linearFunction(patternSize):
 
         # Calculate the values based on the function the user specified
         for i in range(patternSize):
-            value = coefficient * (variableStart + i) + constant
+            value = coefficient * (variableStart + i)
             # Ensure that no value goes below 1 as only positive integers make sense
             if value <= 0:
                 valueError(value, variableStart + i, function)
@@ -590,7 +589,7 @@ def multiSelectPrompt(message, query, lst):
 
         # List can be a list or a dictionary, which both have different access functions
         if type(lst) == dict:
-            for i in range(len(lst)):
+            for i in range(1, len(lst) + 1):
                 print(i, ":", lst.get(i))
         # If type(lst) is not a dictionary, it must be a list
         else:
@@ -601,7 +600,7 @@ def multiSelectPrompt(message, query, lst):
         selection = inputPrompt(query, int)
 
         # Check if that selection is within range
-        if selection >= len(lst) or selection < 0:
+        if selection >= len(lst) + 1 or selection < 1:
             inputError(selection)
         else:
             flag = False
@@ -876,9 +875,13 @@ def programExit():
     :return:
     """
     print()
+    print("**********************************************************************")
+    print()
     print("Thank you for using Alexandra Worland's Artificial Neural Network Profiler.")
     print()
     print("Goodbye!")
+    print()
+    print("**********************************************************************")
     exit()
 
 
