@@ -6,7 +6,6 @@ Description:
     This file retrieves the MNIST dataset that the NeuralNetwork.py file will use
 """
 
-import tensorflow_datasets as dataSets
 import tensorflow as tensorFlow
 
 

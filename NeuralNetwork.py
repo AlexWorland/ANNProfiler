@@ -7,8 +7,6 @@ Description:
 """
 
 import tensorflow as tensorFlow
-from FinalProject.MNISTDataset import MNIST
-
 
 class NeuralNetwork:
     """
