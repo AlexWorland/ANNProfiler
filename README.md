@@ -8,5 +8,5 @@ These factors include:
   - Number of epochs trained for each network
  
  Dependencies:
-  Tensorflow (For GPU support follow tensorflow's instructions on how to set up tensorflow with a gpu as it is different for each operating system)
-  Matplotlib
+  - Tensorflow (For GPU support use tensorflow-gpu instead and follow tensorflow's instructions on how to set up tensorflow to use a GPU as it can be quite involved depending on your operating system.)
+  - Matplotlib
