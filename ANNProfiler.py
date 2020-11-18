@@ -18,12 +18,13 @@ print("\nInitializing...")
 
 # Disable tensorflow logging
 import os
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = "1"
 import tensorflow as tensorFlow
 from tensorflow.python.client import device_lib
 import time
-from FinalProject.MNISTDataset import MNIST as MNISTData
-from FinalProject.NeuralNetwork import NeuralNetwork as NeuralNetwork
+from MNISTDataset import MNIST as MNISTData
+from NeuralNetwork import NeuralNetwork as NeuralNetwork
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 
@@ -86,7 +87,7 @@ def main():
         # Get measurement type from the user
         action = getActionFromUser()
 
-        if action == len(actionTypes)-1:
+        if action == len(actionTypes) - 1:
             programExit()
 
         # Get the networks to measure
@@ -108,7 +109,8 @@ def main():
             models.append(network.model)
         ########
 
-        flag = confirmationPrompt("Training is about to begin. Depending on your configuration this may take a long time.")
+        flag = confirmationPrompt(
+            "Training is about to begin. Depending on your configuration this may take a long time.")
         if flag:
             # Initialize the training data
             mnist = initializeMNISTData()
@@ -125,6 +127,7 @@ def main():
             flag = True
     programExit()
 
+
 def welcomeUser():
     """
     A function that displays a welcome message
@@ -140,6 +143,7 @@ def welcomeUser():
     print()
     print("**********************************************************************")
 
+
 def plotResults(xAxisValues, xAxisName, trainingTimes, trainingAccuracies):
     flag = True
     while flag:
@@ -150,9 +154,8 @@ def plotResults(xAxisValues, xAxisName, trainingTimes, trainingAccuracies):
 
         color = 'tab:red'
         ax1.set_xlabel(xAxisName)
-        ax1.set_ylabel('training time (seconds)')
+        ax1.set_ylabel('training time (seconds)', color=color)
         ax1.set_xticks(xAxisValues)
-        ax1.set_yticks(trainingTimes)
         ax1.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
         ax1.scatter(xAxisValues, trainingTimes, color=color)
         ax1.plot(xAxisValues, trainingTimes, color=color)
@@ -161,14 +164,14 @@ def plotResults(xAxisValues, xAxisName, trainingTimes, trainingAccuracies):
         ax2 = ax1.twinx()
 
         color = 'tab:blue'
-        ax2.set_ylabel('training accuracy (% accurate)')
-        ax2.set_yticks(trainingAccuracies)
+        ax2.set_ylabel('training accuracy (% accurate)', color=color)
         ax2.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
         ax2.scatter(xAxisValues, trainingAccuracies, color=color)
         ax2.plot(xAxisValues, trainingAccuracies, color=color)
         ax2.tick_params(axis='y', labelcolor=color)
 
-        fig.tight_layout()
+        # fig.tight_layout()
+        plt.grid()
         plt.show()
 
         confirmation = confirmationPrompt("Program will now return to main menu.")
@@ -176,6 +179,7 @@ def plotResults(xAxisValues, xAxisName, trainingTimes, trainingAccuracies):
             flag = False
         else:
             flag = True
+
 
 # def getUserInfo(activationFunctionMap):
 #     """
@@ -226,25 +230,38 @@ def getActionFromUser():
     actionSelection = multiSelectPrompt("What would you like to do?", "Please enter the action's number: ", actionTypes)
     return actionSelection
 
+
 def getNumNetworksFromUser():
     numNetworks = inputPrompt("How many networks would you like to measure?: ", int)
     return numNetworks
+
 
 def getNumHiddenLayersFromUser():
     numHiddenLayers = inputPrompt("How many hidden layers would you like each network to have?: ", int)
     return numHiddenLayers
 
+
 def getPatternTypeFromUser(variable):
     patternType = multiSelectPrompt(
-        "How would you like to alter the number of " + variable +  " in each network?",
+        "How would you like to alter the number of " + variable + " in each network?",
         "Please enter the pattern's number: ",
         patterns
     )
     return patternType
 
+
 def getNumEpochsFromUser():
-    epochs = inputPrompt("How many epochs would you like to train each network?: ", int)
+    flag = True
+    epochs = 1
+    while flag:
+        epochs = inputPrompt("How many epochs would you like to train each network?: ", int)
+        if epochs <= 0:
+            flag = True
+            inputError(epochs)
+        else:
+            flag = False
     return epochs
+
 
 def getActivFuncFromUser():
     activationFunctionSelection = multiSelectPrompt(
@@ -253,9 +270,11 @@ def getActivFuncFromUser():
         activFuncSelectionMap)
     return activationFunctionSelection
 
+
 def getNumNeuronsFromUser():
     numNeurons = inputPrompt("How many neurons would you like each hidden layer to have?: ", int)
     return numNeurons
+
 
 def getValuesFromPattern(patternType, patternSize):
     switch = {
@@ -267,6 +286,7 @@ def getValuesFromPattern(patternType, patternSize):
     patternFunction = switch.get(patternType)
     pattern = patternFunction(patternSize)
     return pattern
+
 
 def measureNeurons():
     layerSizes = []
@@ -321,6 +341,7 @@ def measureHiddenLayers():
 
     return networks, numHiddenLayers
 
+
 def measureEpochs():
     numEpochs = []
     networks = []
@@ -346,6 +367,7 @@ def measureEpochs():
 
     return networks, numEpochs
 
+
 # def neuronsVsAccuracy():
 # def hiddenLayersVsAccuracy():
 # def numEpochsVsAccuracy():
@@ -358,16 +380,15 @@ def linearFunction(patternSize):
     while flag:
         while flag:
             print()
-            print("A linear function will be represented as \"y = mx + b\"")
+            print("A linear function will be represented as \"y = mx\"")  # + b\"")
 
             coefficient = inputPrompt("What should the value of m be?: ", int)
 
-            constant = inputPrompt("What should the value of b be? : ", int)
+            # constant = inputPrompt("What should the value of b be? : ", int)
 
             variableStart = inputPrompt("What should the starting value of x be? : ", int)
 
-
-            function = "y = " + str(coefficient) + "x + " + str(constant)
+            function = "y = " + str(coefficient) + "x + "  # + str(constant)
             print()
             print("Function will be:", function)
             confirmation = confirmationPrompt()
@@ -375,7 +396,7 @@ def linearFunction(patternSize):
                 flag = False
         flag = True
         for i in range(patternSize):
-            value = coefficient * (variableStart + i) + constant
+            value = coefficient * (variableStart + i)  # + constant
             if value <= 0:
                 valueError(value, variableStart + i, function)
                 flag = False
@@ -399,15 +420,12 @@ def polynomialFunction(patternSize):
             print()
             print("A polynomial function will be represented as \"y = x^n\"")
 
-
             power = inputPrompt("What should the value of n be?", int)
 
             variableStart = inputPrompt("What should the starting value of x be?", int)
 
-
             print()
             print("Function will be: y = x^" + str(power))
-
 
             confirmation = confirmationPrompt()
             if confirmation:
@@ -434,7 +452,6 @@ def exponentialFunction(patternSize):
         while flag:
             print()
             print("An exponential function will be represented as \"y = n^x\"")
-
 
             constant = inputPrompt("What should the value of n be? : ", int)
 
@@ -545,6 +562,7 @@ def confirmationPrompt(*args):
         else:
             inputError(choice)
 
+
 def inputError(thrownValue):
     """
     A function that informs the user that their input was invalid
@@ -558,6 +576,7 @@ def inputError(thrownValue):
     print()
     print("**********************************************************************")
 
+
 def valueError(value, variable, function):
     print()
     print("**********************************************************************")
@@ -568,12 +587,14 @@ def valueError(value, variable, function):
     print()
     print("**********************************************************************")
 
+
 def initializeMNISTData():
     # Initialize the MNIST dataset
     print()
     print("Initializing MNIST dataset...")
     mnistData = MNISTData()
     return mnistData
+
 
 def generateUnintializedNetworks(measurement):
     switch = {
@@ -584,6 +605,7 @@ def generateUnintializedNetworks(measurement):
     func = switch.get(measurement)
     values = func()
     return values
+
 
 def createNetworks(networks, device):
     with tensorFlow.device(device.name):
@@ -597,6 +619,7 @@ def createNetworks(networks, device):
             network.compileModel()
         return networks
 
+
 def trainNetworks(networks, mnistData, device):
     startTimes = []
     endTimes = []
@@ -606,15 +629,15 @@ def trainNetworks(networks, mnistData, device):
     with tensorFlow.device(device.name):
         for i in range(len(networks)):
             print()
-            print("Training network", i+1, "of", len(networks), "...")
+            print("Training network", i + 1, "of", len(networks), "...")
             startTimes.append(time.perf_counter())
             trainModel(networks[i], mnistData)
             endTimes.append(time.perf_counter())
             metrics.append(networks[i].model.metrics)
     return networks, startTimes, endTimes, metrics
 
-def getNetworkMetrics(networks):
 
+def getNetworkMetrics(networks):
     # metrics[0] is loss and metrics[1] is accuracy. Each is found by .result().numpy().item()
     accuracies = []
     losses = []
@@ -622,6 +645,7 @@ def getNetworkMetrics(networks):
         accuracies.append(network.model.metrics[1].result().numpy().item() * 100)
         losses.append(network.model.metrics[0].result().numpy().item() * 100)
     return accuracies, losses
+
 
 def initializeModel(userInfo):
     """
@@ -669,6 +693,7 @@ def calculateRuntimes(startTimes, endTimes):
     for i in range(len(startTimes)):
         runTimes.append(endTimes[i] - startTimes[i])
     return runTimes
+
 
 def programExit():
     print()
