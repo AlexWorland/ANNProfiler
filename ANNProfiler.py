@@ -13,7 +13,9 @@ Description:
     The user can also interact with the network directly through the user input mode. The user can draw their
     own digit with their mouse and see the network work visually and see the prediction and accuracy displayed.
 """
+
 print("\nInitializing...")
+
 # Disable tensorflow logging
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = "1"
@@ -22,8 +24,8 @@ from tensorflow.python.client import device_lib
 import time
 from FinalProject.MNISTDataset import MNIST as MNISTData
 from FinalProject.NeuralNetwork import NeuralNetwork as NeuralNetwork
-import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 
 activFuncSelectionMap = {0: "Rectified Linear (Recommended For Hidden Layer(s))",
                          1: "Linear",
@@ -49,12 +51,18 @@ activFuncKerasMap = {"Rectified Linear (Recommended For Hidden Layer(s))": 'relu
                      "Softsign": 'softsign',
                      "Swish": 'swish',
                      "Hyperbolic Tangent Activation Function": 'tanh'}
-measurementTypes = {0: "Number of Neurons vs Training Time",
-                    1: "Number of Hidden Layers vs Training Time",
-                    2: "Number of Epochs vs Training Time",
-                    3: "Number of Neurons vs Training Accuracy",
-                    4: "Number of Hidden Layers vs Training Accuracy",
-                    5: "Number of Epochs vs Training Accuracy"}
+actionTypes = {0: "Measure Number of Neurons vs Training Time and Accuracy",
+               1: "Measure Number of Hidden Layers vs Training Time and Accuracy",
+               2: "Measure Number of Epochs vs Training Time and Accuracy",
+               # Last entry is always exit program
+               3: "Exit Program"
+               # TODO: Could add option to plot epoch training time individually
+               }
+xAxisLabels = {
+    0: "Number of Neurons Per Hidden Layer",
+    1: "Number of Hidden Layers Per Network",
+    2: "Number of Training Epochs Per Network"
+}
 patterns = {
     0: "Linear Function",
     1: "Exponential Function (Warning: This can grow very fast. Please choose a small initial number.)",
@@ -65,27 +73,30 @@ patterns = {
 
 
 def main():
+    """
+    Main program function
+    :return:
+    """
+    # Display the welcome prompt
+    welcomeUser()
 
-    # Debug
-    # plt.plot([1,2,3,4,5])
-    # plt.show()
-
+    # Main program loop
     flag = True
     while flag:
-        # Display the welcome prompt
-        welcomeUser()
-
         # Get measurement type from the user
-        measurementType = getMeasurementTypeFromUser()
+        action = getActionFromUser()
+
+        if action == len(actionTypes)-1:
+            programExit()
 
         # Get the networks to measure
-        unintializedNetworks, xAxisValues = generateUnintializedNetworks(measurementType)
+        unintializedNetworks, xAxisValues = generateUnintializedNetworks(action)
 
         # Get device to train with from user
         device = deviceSelectionPrompt()
 
         # Create the networks using the user specified device
-        # TODO: Consider adding multiple execution modes
+        # TODO: Consider adding multiple execution modes: option to use multiple processing devices
 
         # Create networks using user specified device
         networks = createNetworks(unintializedNetworks, device)
@@ -102,43 +113,69 @@ def main():
             # Initialize the training data
             mnist = initializeMNISTData()
 
-            # TODO: Document that metrics[0] is loss and metrics[1] is accuracy. Each is found by .result()
             networks, startTimes, endTimes, metrics = trainNetworks(networks, mnist, device)
 
             accuracies, losses = getNetworkMetrics(networks)
 
             runtimes = calculateRuntimes(startTimes, endTimes)
 
-            print(accuracies)
-            print(losses)
-            print(runtimes)
+            plotResults(xAxisValues, xAxisLabels.get(action), runtimes, accuracies)
 
-            plt.plot(xAxisValues, accuracies)
-            plt.show()
-
-            while True:
-                x = 3 # do nothing
-
-            flag = False
         else:
             flag = True
-
+    programExit()
 
 def welcomeUser():
     """
     A function that displays a welcome message
     :return:
     """
+    print()
     print("**********************************************************************")
-
+    print()
     print("Hello! Welcome to Alexandra Worland's Artificial Neural Network Profiler!")
-
+    print()
     print(
         "This tool profiles a simple ANN that can predict the value of handwritten digits 0-9 using the MNIST dataset.")
-
+    print()
     print("**********************************************************************")
 
+def plotResults(xAxisValues, xAxisName, trainingTimes, trainingAccuracies):
+    flag = True
+    while flag:
+        print()
+        print("Plotting results...")
 
+        fig, ax1 = plt.subplots()
+
+        color = 'tab:red'
+        ax1.set_xlabel(xAxisName)
+        ax1.set_ylabel('training time (seconds)')
+        ax1.set_xticks(xAxisValues)
+        ax1.set_yticks(trainingTimes)
+        ax1.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+        ax1.scatter(xAxisValues, trainingTimes, color=color)
+        ax1.plot(xAxisValues, trainingTimes, color=color)
+        ax1.tick_params(axis='y', labelcolor=color)
+
+        ax2 = ax1.twinx()
+
+        color = 'tab:blue'
+        ax2.set_ylabel('training accuracy (% accurate)')
+        ax2.set_yticks(trainingAccuracies)
+        ax2.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+        ax2.scatter(xAxisValues, trainingAccuracies, color=color)
+        ax2.plot(xAxisValues, trainingAccuracies, color=color)
+        ax2.tick_params(axis='y', labelcolor=color)
+
+        fig.tight_layout()
+        plt.show()
+
+        confirmation = confirmationPrompt("Program will now return to main menu.")
+        if confirmation:
+            flag = False
+        else:
+            flag = True
 
 # def getUserInfo(activationFunctionMap):
 #     """
@@ -181,14 +218,13 @@ def welcomeUser():
 #
 #     return [numHiddenLayers, numNeurons, numEpochs, activationFunction, device]
 
-
-def getMeasurementTypeFromUser():
+def getActionFromUser():
     """
     A function that gets the measurement type from the user
     :return: An integer representing the measurement type
     """
-    measurementType = multiSelectPrompt("What would you like to measure?", "Please enter the measurement's number: ",measurementTypes)
-    return measurementType
+    actionSelection = multiSelectPrompt("What would you like to do?", "Please enter the action's number: ", actionTypes)
+    return actionSelection
 
 def getNumNetworksFromUser():
     numNetworks = inputPrompt("How many networks would you like to measure?: ", int)
@@ -221,9 +257,21 @@ def getNumNeuronsFromUser():
     numNeurons = inputPrompt("How many neurons would you like each hidden layer to have?: ", int)
     return numNeurons
 
-def neuronsVsTime():
+def getValuesFromPattern(patternType, patternSize):
+    switch = {
+        0: linearFunction,
+        1: exponentialFunction,
+        2: polynomialFunction,
+        3: manualEntry
+    }
+    patternFunction = switch.get(patternType)
+    pattern = patternFunction(patternSize)
+    return pattern
+
+def measureNeurons():
     layerSizes = []
     networks = []
+    print()
     print("**********************************************************************")
 
     numNetworks = getNumNetworksFromUser()
@@ -248,9 +296,10 @@ def neuronsVsTime():
     return networks, layerSizes
 
 
-def hiddenLayersVsTime():
+def measureHiddenLayers():
     numHiddenLayers = []
     networks = []
+    print()
     print("**********************************************************************")
 
     numNetworks = getNumNetworksFromUser()
@@ -272,9 +321,10 @@ def hiddenLayersVsTime():
 
     return networks, numHiddenLayers
 
-def numEpochsVsTime():
+def measureEpochs():
     numEpochs = []
     networks = []
+    print()
     print("**********************************************************************")
 
     numNetworks = getNumNetworksFromUser()
@@ -283,9 +333,9 @@ def numEpochsVsTime():
 
     numEpochs = getValuesFromPattern(patternType, numNetworks)
 
-    numNeurons = getNumNeuronsFromUser()
-
     numHiddenLayers = getNumHiddenLayersFromUser()
+
+    numNeurons = getNumNeuronsFromUser()
 
     activationFunctionSelection = getActivFuncFromUser()
 
@@ -301,24 +351,13 @@ def numEpochsVsTime():
 # def numEpochsVsAccuracy():
 
 
-def getValuesFromPattern(patternType, patternSize):
-    switch = {
-        0: linearFunction,
-        1: exponentialFunction,
-        2: polynomialFunction,
-        3: manualEntry
-    }
-    patternFunction = switch.get(patternType)
-    pattern = patternFunction(patternSize)
-    return pattern
-
-
 def linearFunction(patternSize):
     values = []
     flag = True
 
     while flag:
         while flag:
+            print()
             print("A linear function will be represented as \"y = mx + b\"")
 
             coefficient = inputPrompt("What should the value of m be?: ", int)
@@ -329,6 +368,7 @@ def linearFunction(patternSize):
 
 
             function = "y = " + str(coefficient) + "x + " + str(constant)
+            print()
             print("Function will be:", function)
             confirmation = confirmationPrompt()
             if confirmation:
@@ -342,6 +382,7 @@ def linearFunction(patternSize):
                 break
             values.append(value)
         if flag:
+            print()
             print("Values will be:", values)
             confirmation = confirmationPrompt()
             if confirmation:
@@ -355,7 +396,7 @@ def polynomialFunction(patternSize):
     flag = True
     while flag:
         while flag:
-
+            print()
             print("A polynomial function will be represented as \"y = x^n\"")
 
 
@@ -364,7 +405,7 @@ def polynomialFunction(patternSize):
             variableStart = inputPrompt("What should the starting value of x be?", int)
 
 
-
+            print()
             print("Function will be: y = x^" + str(power))
 
 
@@ -376,7 +417,7 @@ def polynomialFunction(patternSize):
 
         for i in range(patternSize):
             values.append((variableStart + i) ** power)
-
+        print()
         print("Values will be:", values)
 
         confirmation = confirmationPrompt()
@@ -391,7 +432,7 @@ def exponentialFunction(patternSize):
     flag = True
     while flag:
         while flag:
-
+            print()
             print("An exponential function will be represented as \"y = n^x\"")
 
 
@@ -399,7 +440,7 @@ def exponentialFunction(patternSize):
 
             variableStart = inputPrompt("What should the starting value of x be? : ", int)
 
-
+            print()
             print("Function will be: y=", str(constant) + "^x")
 
             confirmation = confirmationPrompt()
@@ -410,7 +451,7 @@ def exponentialFunction(patternSize):
 
         for i in range(patternSize):
             values.append(constant ** (variableStart + i))
-
+        print()
         print("Values will be:", values)
 
         confirmation = confirmationPrompt()
@@ -428,6 +469,7 @@ def manualEntry(patternSize):
         for i in range(patternSize):
             value = inputPrompt("Please enter a value for x = " + str(i), int)
             values.append(value)
+        print()
         print("Values will be:", values)
         confirmation = confirmationPrompt()
         if confirmation:
@@ -440,6 +482,7 @@ def inputPrompt(message, typeVar):
     value = None
     while flag:
         try:
+            print()
             value = input(message)
             value = typeVar(value)
             flag = False
@@ -454,8 +497,9 @@ def multiSelectPrompt(message, query, lst):
     flag = True
     selection = None
     while flag:
-
+        print()
         print(message)
+        print()
 
         if type(lst) == dict:
             for i in range(len(lst)):
@@ -480,7 +524,8 @@ def deviceSelectionPrompt():
             "What device would you like to train the networks with?",
             "Please select the device's number: ",
             devices)
-        print("You have selected device:", devices[deviceSelection])
+        print()
+        print("You have selected device:", devices[deviceSelection].name)
         confirmed = confirmationPrompt()
     return devices[deviceSelection]
 
@@ -489,6 +534,7 @@ def confirmationPrompt(*args):
     flag = True
     confirmationMsg = "Is that ok? (y/n) : "
     for msg in args:
+        print()
         print(msg)
     while flag:
         choice = inputPrompt(confirmationMsg, str).lower()
@@ -499,61 +545,67 @@ def confirmationPrompt(*args):
         else:
             inputError(choice)
 
-def generateUnintializedNetworks(measurement):
-    switch = {
-        0: neuronsVsTime,
-        1: hiddenLayersVsTime,
-        2: numEpochsVsTime,
-
-    }
-    func = switch.get(measurement)
-    values = func()
-    return values
-
-
 def inputError(thrownValue):
     """
     A function that informs the user that their input was invalid
     :param thrownValue: The invalid input
     :return:
     """
-
+    print()
     print("**********************************************************************")
+    print()
     print("Option: \"", thrownValue, "\" is invalid. Please enter a valid option.")
+    print()
     print("**********************************************************************")
 
 def valueError(value, variable, function):
+    print()
     print("**********************************************************************")
+    print()
     print("Error:", function, "at x =", variable, "equals", value, "which is out of bounds.")
+    print()
     print("Please ensure that all values are greater than zero.")
+    print()
     print("**********************************************************************")
-
 
 def initializeMNISTData():
     # Initialize the MNIST dataset
+    print()
     print("Initializing MNIST dataset...")
     mnistData = MNISTData()
     return mnistData
 
+def generateUnintializedNetworks(measurement):
+    switch = {
+        0: measureNeurons,
+        1: measureHiddenLayers,
+        2: measureEpochs,
+    }
+    func = switch.get(measurement)
+    values = func()
+    return values
 
 def createNetworks(networks, device):
     with tensorFlow.device(device.name):
+        print()
         print("Creating Networks...")
         for network in networks:
             network.createModel()
+        print()
         print("Compiling Networks...")
         for network in networks:
             network.compileModel()
         return networks
 
-
 def trainNetworks(networks, mnistData, device):
     startTimes = []
     endTimes = []
     metrics = []
+    print()
     print("Training networks...")
     with tensorFlow.device(device.name):
         for i in range(len(networks)):
+            print()
             print("Training network", i+1, "of", len(networks), "...")
             startTimes.append(time.perf_counter())
             trainModel(networks[i], mnistData)
@@ -562,11 +614,13 @@ def trainNetworks(networks, mnistData, device):
     return networks, startTimes, endTimes, metrics
 
 def getNetworkMetrics(networks):
+
+    # metrics[0] is loss and metrics[1] is accuracy. Each is found by .result().numpy().item()
     accuracies = []
     losses = []
     for network in networks:
-        accuracies.append(network.model.metrics[1].result().numpy().item())
-        losses.append(network.model.metrics[0].result().numpy().item())
+        accuracies.append(network.model.metrics[1].result().numpy().item() * 100)
+        losses.append(network.model.metrics[0].result().numpy().item() * 100)
     return accuracies, losses
 
 def initializeModel(userInfo):
@@ -615,6 +669,13 @@ def calculateRuntimes(startTimes, endTimes):
     for i in range(len(startTimes)):
         runTimes.append(endTimes[i] - startTimes[i])
     return runTimes
+
+def programExit():
+    print()
+    print("Thank you for using Alexandra Worland's Artificial Neural Network Profiler.")
+    print()
+    print("Goodbye!")
+    exit()
 
 
 if __name__ == '__main__':
