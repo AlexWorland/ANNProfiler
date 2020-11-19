@@ -15,10 +15,8 @@ Description:
 """
 
 print("\nInitializing...")
-
 # Disable tensorflow logging
 import os
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = "1"
 import tensorflow as tensorFlow
 from tensorflow.python.client import device_lib
