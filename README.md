@@ -13,3 +13,5 @@ Dependencies:
 
 How to use:
   Just run ANNProfiler.py and follow the prompts
+
+If you didnt find it there already, check it out on github! https://github.com/AlexWorland/ANNProfiler
