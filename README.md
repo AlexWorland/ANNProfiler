@@ -11,7 +11,6 @@ Dependencies:
   - Tensorflow (For GPU support use tensorflow-gpu instead and follow tensorflow's instructions on how to set up tensorflow to use a GPU as it can be quite involved depending on your operating system.)
   - Matplotlib
 
-How to use:
-  Just run ANNProfiler.py and follow the prompts
+**How to use: Just run ANNProfiler.py and follow the prompts**
 
 If you didnt find it there already, check it out on github! https://github.com/AlexWorland/ANNProfiler
