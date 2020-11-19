@@ -594,7 +594,7 @@ def multiSelectPrompt(message, query, lst):
         # If type(lst) is not a dictionary, it must be a list
         else:
             for i in range(len(lst)):
-                print(i, ":", lst[i])
+                print(i+1, ":", lst[i])
 
         # Get the user's selection
         selection = inputPrompt(query, int)
@@ -618,10 +618,12 @@ def deviceSelectionPrompt():
     # Loop to allow error checking
     confirmed = False
     while not confirmed:
+        # This is -1 because the global behavior was changed so that multiSelect is 1 indexed. This works with
+        # everything except this function. TODO: Fix this later
         deviceSelection = multiSelectPrompt(
             "What device would you like to train the networks with?",
             "Please select the device's number: ",
-            devices)
+            devices) - 1
         print()
         print("You have selected device:", devices[deviceSelection].name)
         confirmed = confirmationPrompt()
