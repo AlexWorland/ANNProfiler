@@ -14,6 +14,7 @@ class NeuralNetwork:
     """
 
     # Default Values
+    # TODO: Consider making changeable
     activationFunctionOutput = 'softmax'
 
     def __init__(self, numHiddenLayers, numNeuronsPerHLayer, trainingEpochs, activationFunction):
@@ -28,7 +29,7 @@ class NeuralNetwork:
         A function that creates the network from the user's parameters
         :return:
         """
-        # Input layer. Always the same: 28x28
+        # Input layer. Always the same size and shape: 28x28
         self.model.add(tensorFlow.keras.layers.Flatten(input_shape=(28, 28)))
         # Add the desired amount of hidden layers, each with the given amount of neurons, each using the given
         # activation function
@@ -39,6 +40,7 @@ class NeuralNetwork:
                     activation=self.activationFunctionHidden
                 )
             )
+        # Dropout layer helps prevent overfitting
         self.model.add(tensorFlow.keras.layers.Dropout(0.2))
         # Add the output layer. Size is always the same: 10 neurons each representing a base 10 digit
         # User can pick the activation function, though TensorFlow recommends softmax
