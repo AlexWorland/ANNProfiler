@@ -23,15 +23,6 @@ class NeuralNetwork:
         self.numEpochs = trainingEpochs
         self.activationFunctionHidden = activationFunction
 
-    def initFromNumHiddenLayers(self, numHiddenLayers):
-        self.numHiddenLayers = numHiddenLayers
-
-    def initFromNumNeuronsPerHLayer(self, numNeuronsPerHLayer):
-        self.numNeuronsPerHLayer = numNeuronsPerHLayer
-
-    def initFromTrainingEpochs(self, trainingEpochs):
-        self.numEpochs = trainingEpochs
-
     def createModel(self):
         """
         A function that creates the network from the user's parameters
@@ -60,7 +51,6 @@ class NeuralNetwork:
         """
         self.model.compile(
             loss=tensorFlow.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-            # TODO: Could be interesting...
             metrics=['accuracy']
         )
 
