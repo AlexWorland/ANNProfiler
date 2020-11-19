@@ -7,6 +7,9 @@ These factors include:
   - Number of hidden layers in each networks
   - Number of epochs trained for each network
  
- Dependencies:
+Dependencies:
   - Tensorflow (For GPU support use tensorflow-gpu instead and follow tensorflow's instructions on how to set up tensorflow to use a GPU as it can be quite involved depending on your operating system.)
   - Matplotlib
+
+How to use:
+  Just run ANNProfiler.py and follow the prompts
